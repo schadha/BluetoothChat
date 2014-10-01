@@ -146,11 +146,6 @@ public class BluetoothChat extends Activity {
             Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
             
-            // Get the BLuetoothDevice object
-            BluetoothDevice device = mBluetoothAdapter.getRemoteDevice("F4:FC:32:7A:C5:96");
-            // Attempt to connect to the device
-            mChatService.connect(device);
-            
         // Otherwise, setup the chat session
         } else {
             if (mChatService == null) setupChat();
