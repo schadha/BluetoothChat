@@ -16,6 +16,8 @@
 
 package com.example.android.BluetoothChat;
 
+import java.lang.reflect.InvocationTargetException;
+
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -143,6 +145,12 @@ public class BluetoothChat extends Activity {
         if (!mBluetoothAdapter.isEnabled()) {
             Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
+            
+            // Get the BLuetoothDevice object
+            BluetoothDevice device = mBluetoothAdapter.getRemoteDevice("F4:FC:32:7A:C5:96");
+            // Attempt to connect to the device
+            mChatService.connect(device);
+            
         // Otherwise, setup the chat session
         } else {
             if (mChatService == null) setupChat();
@@ -194,6 +202,30 @@ public class BluetoothChat extends Activity {
 
         // Initialize the buffer for outgoing messages
         mOutStringBuffer = new StringBuffer("");
+        
+        BluetoothDevice device = mBluetoothAdapter.getRemoteDevice("F4:FC:32:7A:C5:96");
+        
+        try {
+			device.getClass().getMethod("setPairingConfirmation", boolean.class).invoke(device,  true);
+			device.getClass().getMethod("cancelPairingUserInput", boolean.class).invoke(device);
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchMethodException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        
+        // Attempt to connect to the device
+        mChatService.connect(device);
+        
+        Log.d(TAG, "setupChatEnd()");
     }
 
     @Override
