@@ -233,7 +233,9 @@ public class BluetoothChatService {
 
             // Create a new listening server socket
             try {
-                tmp = mAdapter.listenUsingRfcommWithServiceRecord(NAME, MY_UUID);
+//                tmp = mAdapter.listenUsingRfcommWithServiceRecord(NAME, MY_UUID);
+            	tmp = mAdapter.listenUsingInsecureRfcommWithServiceRecord(NAME, MY_UUID);
+//                tmp = InsecureBluetooth.listenUsingRfcommWithServiceRecord(mAdapter, NAME, MY_UUID, true);
             } catch (IOException e) {
                 Log.e(TAG, "listen() failed", e);
             }
@@ -308,7 +310,7 @@ public class BluetoothChatService {
             // Get a BluetoothSocket for a connection with the
             // given BluetoothDevice
             try {
-                tmp = device.createRfcommSocketToServiceRecord(MY_UUID);
+            	tmp = device.createInsecureRfcommSocketToServiceRecord(MY_UUID);
             } catch (IOException e) {
                 Log.e(TAG, "create() failed", e);
             }

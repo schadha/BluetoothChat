@@ -16,7 +16,9 @@
 
 package com.example.android.BluetoothChat;
 
-import java.lang.reflect.InvocationTargetException;
+import java.text.DecimalFormat;
+import java.util.List;
+import java.util.Locale;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -26,7 +28,9 @@ import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorManager;
+import android.location.Address;
 import android.location.Criteria;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -198,27 +202,7 @@ public class BluetoothChat extends Activity {
         // Initialize the buffer for outgoing messages
         mOutStringBuffer = new StringBuffer("");
         
-        BluetoothDevice device = mBluetoothAdapter.getRemoteDevice("F4:FC:32:7A:C5:96");
-        
-        try {
-			device.getClass().getMethod("setPairingConfirmation", boolean.class).invoke(device,  true);
-			device.getClass().getMethod("cancelPairingUserInput", boolean.class).invoke(device);
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchMethodException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-        
-        // Attempt to connect to the device
-        mChatService.connect(device);
+        ensureDiscoverable();
         
         Log.d(TAG, "setupChatEnd()");
     }
@@ -248,7 +232,7 @@ public class BluetoothChat extends Activity {
         if (mBluetoothAdapter.getScanMode() !=
             BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
             Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-            discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
+            discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 60);
             startActivity(discoverableIntent);
         }
     }
@@ -330,7 +314,7 @@ public class BluetoothChat extends Activity {
                 String readMessage = new String(readBuf, 0, msg.arg1);
                 
                 if (readMessage.toLowerCase().equals("gps")) {
-                	String location = getLocation();
+                	String location = getLocation(BluetoothChat.this.getApplicationContext());
                 	byte[] buffer2 = location.getBytes();
                 	mChatService.write(buffer2);
                 }
@@ -353,7 +337,7 @@ public class BluetoothChat extends Activity {
         }
     };
     
-    public static String getLocation() {
+    public static String getLocation(Context context) {
         Criteria criteria = new Criteria();
         String bestProvider = locationManager.getBestProvider(criteria, false);
         Location location = locationManager.getLastKnownLocation(bestProvider);
@@ -371,13 +355,39 @@ public class BluetoothChat extends Activity {
                 .requestLocationUpdates(bestProvider, 0, 0, loc_listener);
         location = locationManager.getLastKnownLocation(bestProvider);
         try {
-        	locInfo[0] = "" + location.getLatitude();
-        	locInfo[1] = "" + location.getLongitude();
+        	locInfo[0] = "" + new DecimalFormat("#.#####").format(location.getLatitude());
+        	locInfo[1] = "" + new DecimalFormat("#.#####").format(location.getLongitude());
         } catch (NullPointerException e) {
         	locInfo[0] = "No GPS Available";
         	locInfo[1] = "";
         }
-        return locInfo[0] + ", " + locInfo[1];
+        List<Address> addresses = null;
+        //Get address base on location
+        try{
+         Geocoder geo = new Geocoder(context, Locale.getDefault());
+          addresses = geo.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+          if (addresses.isEmpty()) {
+//                yourtextfieldname.setText("Waiting for Location");
+        	  return locInfo[0] + ", " + locInfo[1];
+          }
+          else {
+             if (addresses.size() > 0) {       
+                Log.d(TAG,addresses.get(0).getFeatureName() + ", " +
+                  addresses.get(0).getLocality() +", " + 
+                  addresses.get(0).getAdminArea() + ", " +
+                  addresses.get(0).getCountryName() + ", " +
+                  addresses.get(0).getAddressLine(0) + ", " +
+                  addresses.get(0).getAddressLine(1));
+
+             }
+          }
+        }
+        catch (Exception e) {
+            e.printStackTrace(); 
+        }
+        
+        
+        return locInfo[0] + ", " + locInfo[1] + ": " + addresses.get(0).getAddressLine(0) + " " + addresses.get(0).getAddressLine(2);
     }
     
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -424,10 +434,10 @@ public class BluetoothChat extends Activity {
             Intent serverIntent = new Intent(this, DeviceListActivity.class);
             startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
             return true;
-        case R.id.discoverable:
-            // Ensure this device is discoverable by others
-            ensureDiscoverable();
-            return true;
+//        case R.id.discoverable:
+//            // Ensure this device is discoverable by others
+//            ensureDiscoverable();
+//            return true;
         }
         return false;
     }
