@@ -97,7 +97,8 @@ public class BluetoothChat extends Activity {
     private static String[] locInfo = new String[2];
     
     private SensorManager mSensorManager;
-    private Sensor mSensor;
+    @SuppressWarnings("unused")
+	private Sensor mSensor;
     
     // Create a constant to convert nanoseconds to seconds.
     private static final float NS2S = 1.0f / 1000000000.0f;
@@ -232,7 +233,7 @@ public class BluetoothChat extends Activity {
         if (mBluetoothAdapter.getScanMode() !=
             BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
             Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-            discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 60);
+            discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
             startActivity(discoverableIntent);
         }
     }
@@ -315,8 +316,8 @@ public class BluetoothChat extends Activity {
                 
                 if (readMessage.toLowerCase().equals("gps")) {
                 	String location = getLocation(BluetoothChat.this.getApplicationContext());
-                	byte[] buffer2 = location.getBytes();
-                	mChatService.write(buffer2);
+                	byte[] buffer = location.getBytes();
+                	mChatService.write(buffer);
                 }
                 else {
                 	mConversationArrayAdapter.add(mConnectedDeviceName+":  " + readMessage);
@@ -359,7 +360,7 @@ public class BluetoothChat extends Activity {
         	locInfo[1] = "" + new DecimalFormat("#.#####").format(location.getLongitude());
         } catch (NullPointerException e) {
         	locInfo[0] = "No GPS Available";
-        	locInfo[1] = "";
+        	return locInfo[0];
         }
         List<Address> addresses = null;
         //Get address base on location
@@ -367,27 +368,14 @@ public class BluetoothChat extends Activity {
          Geocoder geo = new Geocoder(context, Locale.getDefault());
           addresses = geo.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
           if (addresses.isEmpty()) {
-//                yourtextfieldname.setText("Waiting for Location");
         	  return locInfo[0] + ", " + locInfo[1];
-          }
-          else {
-             if (addresses.size() > 0) {       
-                Log.d(TAG,addresses.get(0).getFeatureName() + ", " +
-                  addresses.get(0).getLocality() +", " + 
-                  addresses.get(0).getAdminArea() + ", " +
-                  addresses.get(0).getCountryName() + ", " +
-                  addresses.get(0).getAddressLine(0) + ", " +
-                  addresses.get(0).getAddressLine(1));
-
-             }
           }
         }
         catch (Exception e) {
             e.printStackTrace(); 
         }
         
-        
-        return locInfo[0] + ", " + locInfo[1] + ": " + addresses.get(0).getAddressLine(0) + " " + addresses.get(0).getAddressLine(2);
+        return addresses.get(0).getAddressLine(0) + " " + addresses.get(0).getAddressLine(1) + " (" + locInfo[0] + ", " + locInfo[1] + ")";
     }
     
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -442,9 +430,6 @@ public class BluetoothChat extends Activity {
         return false;
     }
     
-    
-
-
     public void onSensorChanged(SensorEvent event) {
       // This timestep's delta rotation to be multiplied by the current rotation
       // after computing it from the gyro sample data.
