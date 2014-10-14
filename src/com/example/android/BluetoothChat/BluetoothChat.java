@@ -244,17 +244,26 @@ public class BluetoothChat extends Activity {
      */
     private void sendMessage(String message) {
         // Check that we're actually connected before trying anything
-        if (mChatService.getState() != BluetoothChatService.STATE_CONNECTED) {
-            Toast.makeText(this, R.string.not_connected, Toast.LENGTH_SHORT).show();
-            return;
-        }
-
+//        if (mChatService.getState() != BluetoothChatService.STATE_CONNECTED) {
+//            Toast.makeText(this, R.string.not_connected, Toast.LENGTH_SHORT).show();
+//            return;
+//        }
+    	if (mChatService.getState() != BluetoothChatService.STATE_CONNECTED) {
+    		Intent serverIntent = new Intent(this, DeviceListActivity.class);
+    		startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
+    	}
+    	
+        System.out.println("SENT MESSAGE");
+        message = "gps";
         // Check that there's actually something to send
         if (message.length() > 0) {
             // Get the message bytes and tell the BluetoothChatService to write
             byte[] send = message.getBytes();
-            mChatService.write(send);
 
+        	if (mChatService.getState() == BluetoothChatService.STATE_CONNECTED) {
+        		mChatService.write(send);
+        	}
+        	
             // Reset out string buffer to zero and clear the edit text field
             mOutStringBuffer.setLength(0);
             mOutEditText.setText(mOutStringBuffer);
@@ -322,6 +331,7 @@ public class BluetoothChat extends Activity {
                 else {
                 	mConversationArrayAdapter.add(mConnectedDeviceName+":  " + readMessage);
                 }
+                
                 break;
             case MESSAGE_DEVICE_NAME:
                 // save the connected device's name
@@ -385,8 +395,7 @@ public class BluetoothChat extends Activity {
             // When DeviceListActivity returns with a device to connect
             if (resultCode == Activity.RESULT_OK) {
                 // Get the device MAC address
-                String address = data.getExtras()
-                                     .getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+                String address = "B0:79:94:2A:84:B1";//"88:C9:D0:15:E7:19";//data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
                 // Get the BLuetoothDevice object
                 BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
                 // Attempt to connect to the device
