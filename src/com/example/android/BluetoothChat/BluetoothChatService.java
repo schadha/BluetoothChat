@@ -233,9 +233,7 @@ public class BluetoothChatService {
 
             // Create a new listening server socket
             try {
-//                tmp = mAdapter.listenUsingRfcommWithServiceRecord(NAME, MY_UUID);
             	tmp = mAdapter.listenUsingInsecureRfcommWithServiceRecord(NAME, MY_UUID);
-//                tmp = InsecureBluetooth.listenUsingRfcommWithServiceRecord(mAdapter, NAME, MY_UUID, true);
             } catch (IOException e) {
                 Log.e(TAG, "listen() failed", e);
             }

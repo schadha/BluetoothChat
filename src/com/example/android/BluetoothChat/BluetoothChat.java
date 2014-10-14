@@ -75,6 +75,11 @@ public class BluetoothChat extends Activity {
     // Intent request codes
     private static final int REQUEST_CONNECT_DEVICE = 1;
     private static final int REQUEST_ENABLE_BT = 2;
+    
+    
+    private static final String BT_MAC_ADDRESS_DROID = "B0:79:94:2A:84:B1";
+//    private static final String BT_MAC_ADDRESS_VOLT = "88:C9:D0:15:E7:19";
+    private static final String BT_MAC_ADDRESS = BT_MAC_ADDRESS_DROID;
 
     // Layout Views
     private TextView mTitle;
@@ -186,6 +191,14 @@ public class BluetoothChat extends Activity {
         mOutEditText = (EditText) findViewById(R.id.edit_text_out);
         mOutEditText.setOnEditorActionListener(mWriteListener);
 
+        // Initialize the BluetoothChatService to perform bluetooth connections
+        mChatService = new BluetoothChatService(this, mHandler);
+
+        // Initialize the buffer for outgoing messages
+        mOutStringBuffer = new StringBuffer("");
+        
+        ensureDiscoverable();
+        
         // Initialize the send button with a listener that for click events
         mSendButton = (Button) findViewById(R.id.button_send);
         mSendButton.setOnClickListener(new OnClickListener() {
@@ -196,14 +209,6 @@ public class BluetoothChat extends Activity {
                 sendMessage(message);
             }
         });
-
-        // Initialize the BluetoothChatService to perform bluetooth connections
-        mChatService = new BluetoothChatService(this, mHandler);
-
-        // Initialize the buffer for outgoing messages
-        mOutStringBuffer = new StringBuffer("");
-        
-        ensureDiscoverable();
         
         Log.d(TAG, "setupChatEnd()");
     }
@@ -249,6 +254,7 @@ public class BluetoothChat extends Activity {
 //            return;
 //        }
     	if (mChatService.getState() != BluetoothChatService.STATE_CONNECTED) {
+    		
     		Intent serverIntent = new Intent(this, DeviceListActivity.class);
     		startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
     	}
@@ -259,7 +265,7 @@ public class BluetoothChat extends Activity {
         if (message.length() > 0) {
             // Get the message bytes and tell the BluetoothChatService to write
             byte[] send = message.getBytes();
-
+            
         	if (mChatService.getState() == BluetoothChatService.STATE_CONNECTED) {
         		mChatService.write(send);
         	}
@@ -296,6 +302,11 @@ public class BluetoothChat extends Activity {
                     mTitle.setText(R.string.title_connected_to);
                     mTitle.append(mConnectedDeviceName);
                     mConversationArrayAdapter.clear();
+                    
+                    if (!mBluetoothAdapter.getAddress().equals(BT_MAC_ADDRESS)) {
+                    	BluetoothChat.this.sendMessage("");
+                    }
+                    
                     break;
                 case BluetoothChatService.STATE_CONNECTING:
                     mTitle.setText(R.string.title_connecting);
@@ -395,7 +406,7 @@ public class BluetoothChat extends Activity {
             // When DeviceListActivity returns with a device to connect
             if (resultCode == Activity.RESULT_OK) {
                 // Get the device MAC address
-                String address = "B0:79:94:2A:84:B1";//"88:C9:D0:15:E7:19";//data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+                String address = BT_MAC_ADDRESS;//data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
                 // Get the BLuetoothDevice object
                 BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
                 // Attempt to connect to the device
