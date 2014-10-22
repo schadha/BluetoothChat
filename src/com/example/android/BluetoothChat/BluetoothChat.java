@@ -256,6 +256,7 @@ public class BluetoothChat extends Activity {
     	if (mChatService.getState() != BluetoothChatService.STATE_CONNECTED) {
     		
     		Intent serverIntent = new Intent(this, DeviceListActivity.class);
+    		
     		startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
     	}
     	
