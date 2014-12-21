@@ -257,6 +257,7 @@ public class BluetoothChat extends Activity {
     		
     		Intent serverIntent = new Intent(this, DeviceListActivity.class);
     		
+    		BluetoothChat.this.startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
     		startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
     	}
     	
